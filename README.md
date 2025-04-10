@@ -35,7 +35,7 @@ These insights emower stakholders with key business metrics, enabling strategic 
 ---
 
 ## About Me
-
+Hi all, I am Masoumeh, a data analyst enthusiast interested in working on different data related projects.
 
 
 
