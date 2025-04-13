@@ -1,3 +1,50 @@
 Data Dictionary for Gold Layer
 
 Overview
+The Gold Layer is the business-level data representation, structures to support analytical and reporting use cases. It consists of dimension
+tables and fact tables for specific business metrics. 
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+1. gold.dim_customers
+* Purpose: Store customer details enriched with demographic and geographic data.
+* Columns:
+customer_key              INT                  Surrogate key uniquely identifying each customer record in the dimension table
+customer_id               INT                  Unique numerical identifier assigned to each customer
+customer_number           NVARCHAR(50)         Alphanumeric identifier representing the customer, for traking and refrencing
+first_name                NVARCHAR(50)         first name of customer
+last_name                 NVARCHAR(50)         last name of customer
+country                   NVARCHAR(50)         country of cutomer('United States')
+marital_status            NVARCHAR(50)         marital status of customer(Single, Married, Unknown)
+gender                    NVARCHAR(50)         gender of customers(Male, Female, Unknown)
+================================================================================================================================
+
+2. gold.dim_products
+* Purpose: Provides information about products
+* Columns:
+product_key                INT                  Surrogate key uniquely identifying each customer record in the dimension table
+product_id                 INT                  Unique numerical identifier assigned to each customer
+product_number             NVARCHAR(50)          Alphanumeric identifier representing the customer, for traking and refrencing
+product_name               NVARCHAR(50)         first name of customer
+category_id                NVARCHAR(50)         last name of customer
+category                   NVARCHAR(50)         country of cutomer('United States')
+subcategory                NVARCHAR(50)         marital status of customer(Single, Married, Unknown)
+maintenance                NVARCHAR(50)         gender of customers(Male, Female, Unknown)
+cost                       INT
+product_line               NVARCHAR(50)
+start_date                 DATE
+================================================================================================================================
+
+3. gold.fact_sales
+* Purpose: Stored transactional sales data for analytical purpose
+* Columns:
+order_number               NVARCHAR(50)          unique alphanumetric identifier for each sales order ('SO54496')
+product_key                INT                   surrogate key linking the order to the product dimension table 
+customer_key               INT                   surrogate key linking the order to customer dimension table 
+order_date                 DATE                  date in which order was placed
+shipping_date              DATE                  date in which the order was shipped 
+due_date                   DATE                  the date in which the order payment was due
+sales_amount               INT                   the total value of sale for the item in whole currency units
+quantity                   INT                   the number of units of the productthat has been ordered
+price                      INT                   the price of product per unit for the line item in whole currency
+
+================================================================================================================================
