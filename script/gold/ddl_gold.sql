@@ -15,6 +15,12 @@ Applications:
 --===========================================================================================================================
 -- Creates Dimension: gold.dim_customers
 --===========================================================================================================================
+IF OBJECT_ID('gold.dim_customers', 'V') IS NOT NULL
+	DROP VIEW gold.dim_customers;
+
+GO
+
+	
 CREATE VIEW gold.dim_customer AS (
 SELECT 
 	ROW_NUMBER() OVER (ORDER BY cst_id) AS customer_key,
@@ -43,6 +49,13 @@ ON
 --===========================================================================================================================
 -- Creates Dimension: gold.dim_product
 --===========================================================================================================================
+
+IF OBJECT_ID('gold.dim_product', 'V') IS NOT NULL
+	DROP VIEW gold.dim_product;
+
+GO
+	
+	
 CREATE VIEW gold.dim_products AS
 SELECT 
 	ROW_NUMBER() OVER(ORDER BY pin.prd_start_dt, pin.prd_key) AS product_key,--Surogate key
@@ -63,6 +76,12 @@ WHERE pin.prd_end_dt IS NULL
 --===========================================================================================================================
 -- Creates Dimension: gold.fact_sales
 --===========================================================================================================================
+IF OBJECT_ID('gold.fact_sales', 'V') IS NOT NULL
+	DROP VIEW gold.fact_sales;
+
+GO
+
+
 CREATE VIEW gold.fact_sales AS 
 SELECT 
 	sd.sls_ord_num AS order_number,
