@@ -1,1 +1,14 @@
+/*
+======================================================================================================
+Quality Checks
+======================================================================================================
+Purpose:
+    This script performs the quality heck to validatethe integrity, consistency, and accuracy if the gold layer. 
+    These checks ensures that :
+      - Uniqueness of surrogate keys
+      - Referential integrity between fact and dimension tables.
+      - Validation of relationships n the data model for analytical purposes.
 
+usage:
+      - Run these checks loading silver layer
+      - 
