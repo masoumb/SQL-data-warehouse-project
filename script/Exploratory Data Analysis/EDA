@@ -1,0 +1,239 @@
+--**===============================================================================================**--
+-- Exploratory Data Analysis --
+
+-- Explote All Objects in the Database ----------------------------------------------------------------
+SELECT * FROM INFORMATION_SCHEMA.TABLES
+
+-- Explore All Columns in the Database -----------------------------------------------------------------
+SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'dim_customer'
+
+-- Dimension Exploration -------------------------------------------------------------------------------
+SELECT DISTINCT country FROM gold.dim_customer
+
+-- Explore All Categories ------------------------------------------------------------------------------
+SELECT DISTINCT category, subcategory, product_name FROM gold.dim_products
+ORDER BY 1,2,3
+
+-- Date Exploration ------------------------------------------------------------------------------------
+-- Identify the earliest and latest date(boundaries)
+-- Understand the scope of the data and the timespan
+-- number of years sales information is available
+SELECT 
+	MIN(order_date) AS first_order_date,
+	MAX(order_date) AS last_order_date,
+	DATEDIFF(YEAR, MIN(order_date), MAX(order_date)) AS order_range_years,
+	DATEDIFF(MONTH, MIN(order_date), MAX(order_date)) AS order_range_months
+FROM gold.fact_sales
+
+-- Find the youngest and oldest customers 
+SELECT 
+	MIN(birth_date) AS youngest_customer,
+	MAX(birth_date) AS oldest_customer,
+	DATEDIFF(YEAR, MIN(birth_date), GETDATE()) as oldest_age,
+	DATEDIFF(YEAR, MAX(birth_date), GETDATE()) as youngest_age
+FROM gold.dim_customer
+
+-- Measures Exploration --------------------------------------------------------------------------------
+-- Calculate the key metric of the business (Big Numbers): 
+-- Highest level of aggregation|Lowest level of details
+-- Find the Total Sales
+SELECT SUM(sales_amount) AS total_sales FROM gold.fact_sales
+
+-- Find how many items were sold
+SELECT SUM(quantity) AS number_sales FROM gold.fact_sales
+
+-- Find the average selling price
+SELECT AVG(price) AS avg_sales FROM gold.fact_sales
+
+-- Find the total number of orders
+SELECT COUNT( order_number) AS number_sales FROM gold.fact_sales
+SELECT COUNT(DISTINCT order_number) AS number_sales FROM gold.fact_sales --We have some repeats
+
+-- Find the total number of poducts
+SELECT COUNT(product_id) AS number_products FROM gold.dim_products
+SELECT COUNT(product_name) AS number_products FROM gold.dim_products
+SELECT COUNT(DISTINCT product_name) AS number_products FROM gold.dim_products
+
+-- Find the total number of customers
+SELECT COUNT(customer_key) AS number_products FROM gold.dim_customer
+SELECT COUNT(DISTINCT customer_key) AS number_products FROM gold.dim_customer
+
+-- Find the total number of customers that have placed an order 
+-- All customers have placed an order becaus total number of customers is equal 
+-- to total number of customers who have placed an order
+SELECT COUNT(DISTINCT customer_key) AS number_products FROM gold.fact_sales
+
+-- Generate a report showing all key metrics of the business ------------------------------------------
+-- In Union, number of columns and data type must match
+
+SELECT 'Total Sales' AS measure_name, SUM(sales_amount) AS measure_value FROM gold.fact_sales
+UNION ALL
+SELECT 'Number of Items Sold' AS measure_name, SUM(quantity) AS measure_value FROM gold.fact_sales
+UNION ALL
+SELECT 'Average Selling Price' AS measure_name, AVG(price) AS measure_value FROM gold.fact_sales
+UNION ALL
+SELECT 'Total Number of Orders' AS measure_name, COUNT(DISTINCT order_number) AS measure_value FROM gold.fact_sales
+UNION ALL
+SELECT 'Total Number of Products' AS measure_name, COUNT(DISTINCT product_name) AS measure_value FROM gold.dim_products
+UNION ALL
+SELECT 'Total Number of Customers' AS measure_name, COUNT(DISTINCT customer_key) AS measure_value FROM gold.dim_customer
+
+
+-- Magnitude Analysis ---------------------------------------------------------------------------------
+-- Comparing the measure values by categories
+-- It helps us understand the importance of different categories
+
+-- Find total customers by country
+SELECT 
+country, 
+COUNT(customer_id) AS number_customers
+FROM gold.dim_customer
+GROUP BY country
+ORDER BY number_customers DESC
+
+-- Find total customers by gender
+SELECT 
+gender, 
+COUNT(customer_id) AS number_customers
+FROM gold.dim_customer
+GROUP BY gender
+ORDER BY number_customers DESC
+
+-- Find total products by category
+SELECT 
+category, 
+COUNT(product_key) AS total_products
+FROM gold.dim_products
+GROUP BY category
+order by total_products DESC
+
+-- What is the average cost in each category?
+SELECT 
+category, 
+AVG(cost) avg_cost
+FROM gold.dim_products 
+GROUP BY category
+ORDER BY avg_cost DESC
+
+-- What is the total revenue generated for each category?
+SELECT 
+p.category, 
+SUM(sales_amount) AS total_revenue
+FROM gold.dim_products p
+JOIN gold.fact_sales f
+ON p.product_key = f.product_key
+GROUP BY p.category
+ORDER BY total_revenue DESC
+
+-- What is the total revenue generated by each customer?
+SELECT 
+c.customer_key,
+customer_number,
+first_name,
+last_name,
+SUM(sales_amount) AS revenue 
+FROM gold.dim_customer c
+JOIN gold.fact_sales f
+ON c.customer_key = f.customer_key
+GROUP BY 
+	c.customer_key,
+	customer_number,
+	first_name,
+	last_name
+ORDER BY c.customer_key
+
+-- What is the distribution of sold items across countries?
+SELECT 
+country, 
+SUM(quantity) AS total_sold_items
+FROM gold.dim_customer c
+JOIN gold.fact_sales f
+ON c.customer_key = f.customer_key
+GROUP BY country 
+ORDER BY total_sold_items DESC
+
+
+-- Ranking Analysis ------------------------------------------------------------------------------------
+-- Order the value of dimension by measure
+-- Top N performers | Bottom N Performers
+-- RANK(), DENSE_RANK(), ROW_NUMBER
+
+-- Which 5 products generates the highest revenue?
+SELECT TOP 5
+p.product_name, 
+SUM(sales_amount) AS total_revenue
+FROM gold.dim_products p
+JOIN gold.fact_sales f
+ON p.product_key = f.product_key
+GROUP BY p.product_name
+ORDER BY total_revenue DESC 
+
+-- Whcih is the 5 worst-performing products in terms of sales?
+SELECT TOP 5
+p.product_name, 
+SUM(sales_amount) AS total_revenue
+FROM gold.dim_products p
+JOIN gold.fact_sales f
+ON p.product_key = f.product_key
+GROUP BY p.product_name
+ORDER BY total_revenue  
+
+-- Another way using rank() as window function
+SELECT *
+FROM
+(SELECT 
+p.product_name, 
+SUM(sales_amount) AS total_revenue,
+RANK() OVER(ORDER BY SUM(sales_amount) DESC) AS rank_products
+FROM gold.dim_products p
+JOIN gold.fact_sales f
+ON p.product_key = f.product_key
+GROUP BY p.product_name) t
+WHERE rank_products <= 5 
+
+-- Find the to 10 customers who have generated the highest revenue
+SELECT TOP 10
+c.customer_key,
+customer_number,
+first_name,
+last_name,
+SUM(sales_amount) AS revenue 
+FROM gold.dim_customer c
+JOIN gold.fact_sales f
+ON c.customer_key = f.customer_key
+GROUP BY 
+	c.customer_key,
+	customer_number,
+	first_name,
+	last_name
+ORDER BY revenue DESC
+
+-- The 3 customers with the fewest orders placed
+SELECT TOP 3 
+c.customer_key, 
+c.first_name, 
+c.last_name,
+count(f.order_number) AS total_orders
+FROM gold.fact_sales f
+JOIN gold.dim_customer c
+on c.customer_key = f.customer_key
+GROUP BY 
+c.customer_key,
+c.first_name, 
+c.last_name
+ORDER BY total_orders
+
+-- SUMMARY
+-- A lot of exploratory data analysis have been done for the database dimensions & measures. 
+-- The dimensions and measures have been combined in order to do magnitude and ranking analysis.
+
+
+
+SELECT * FROM gold.dim_products
+SELECT * FROM gold.fact_sales 
+SELECT * FROM gold.dim_customer 
+
+
+
+
